@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Core.Entities.Models;
+using Core.Requests;
 using Core.Responses;
 
 namespace API.Helpers
@@ -10,6 +11,8 @@ namespace API.Helpers
         {
             CreateMap<Account, AccountResponse>();
             CreateMap<Account, AuthResponse>();
+            CreateMap<RegisterRequest, Account>();
+            CreateMap<CreateRequest, Account>();
         }
     }
 }

@@ -10,5 +10,6 @@ namespace Core.Interfaces
 		Task RevokeToken(string token, string ipAddress);
 		Task ValidateResetToken(ValidateResetTokenRequest model);
 		Task VerifyEmail(string token);
+		Task<string> GenerateVerificationToken();
 	}
 }

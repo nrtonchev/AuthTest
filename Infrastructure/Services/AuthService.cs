@@ -5,10 +5,9 @@ using Core.Entities.Models;
 using Core.Interfaces;
 using Core.Requests;
 using Core.Responses;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
 
 namespace Infrastructure.Services
 {
@@ -124,6 +123,20 @@ namespace Infrastructure.Services
 
 			context.Accounts.Update(account);
 			await context.SaveChangesAsync();
+		}
+
+		public async Task<string> GenerateVerificationToken()
+		{
+			var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+
+			var isTokenUnique = await context.Accounts.AnyAsync(x => x.VerificationToken == token);
+
+			if (!isTokenUnique)
+			{
+				return await GenerateVerificationToken();
+			}
+
+			return token;
 		}
 
 		#region Private members
