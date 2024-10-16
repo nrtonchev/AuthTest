@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Core;
 using Core.Entities.Models;
 using Core.Interfaces;
 using Core.Requests;
@@ -22,29 +23,61 @@ namespace Infrastructure.Services
 			this.authService = authService;
 		}
 
-        public Task<AccountResponse> Create(CreateRequest model)
+        public async Task<AccountResponse> Create(CreateRequest model)
 		{
-			throw new NotImplementedException();
+			var existing = await context.Accounts.AnyAsync(x => x.Email == model.Email);
+
+			if (!existing) 
+			{
+				throw new DomainException($"An account with email: '{model.Email}', is already registered!");
+			}
+
+			var account = mapper.Map<Account>(model);
+			account.Created = DateTime.UtcNow;
+			account.Verified = DateTime.UtcNow;
+			account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+
+			await context.Accounts.AddAsync(account);
+			await context.SaveChangesAsync();
+
+			return mapper.Map<AccountResponse>(account);
 		}
 
-		public Task Delete(int id)
+		public async Task Delete(int id)
 		{
-			throw new NotImplementedException();
+			var account = await GetAccountById(id);
+			context.Accounts.Remove(account);
+			await context.SaveChangesAsync();	
 		}
 
-		public Task ForgotPassword(ForgotPasswordRequest request, string origin)
+		public async Task ForgotPassword(ForgotPasswordRequest request, string origin)
 		{
-			throw new NotImplementedException();
+			var account = await context.Accounts.SingleOrDefaultAsync(x => x.Email == request.Email);
+
+			if (account == null)
+			{
+				return;
+			}
+
+			account.ResetToken = await authService.GenerateResetToken();
+			account.ResetTokenExpires = DateTime.UtcNow.AddDays(1);
+
+			context.Accounts.Update(account);
+			await context.SaveChangesAsync();
+
+			SendPasswordResetEmail(account, origin);
 		}
 
-		public Task<IEnumerable<AccountResponse>> GetAccounts()
+		public async Task<IEnumerable<AccountResponse>> GetAccounts()
 		{
-			throw new NotImplementedException();
+			var accounts = await context.Accounts.Select(a => mapper.Map<AccountResponse>(a)).ToListAsync();
+			return accounts;
 		}
 
-		public Task<AccountResponse> GetById(int id)
+		public async Task<AccountResponse> GetById(int id)
 		{
-			throw new NotImplementedException();
+			var account = await GetAccountById(id);
+			return mapper.Map<AccountResponse>(account);
 		}
 
 		public async Task Register(RegisterRequest request, string origin)
@@ -73,14 +106,40 @@ namespace Infrastructure.Services
 			SendVerificationEmail(account, origin);
 		}
 
-		public Task ResetPassword(ResetPasswordRequest request)
+		public async Task ResetPassword(ResetPasswordRequest request)
 		{
-			throw new NotImplementedException();
+			var account = await GetAccountByResetToken(request.Token);
+
+			account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+			account.PasswordReset = DateTime.UtcNow;
+			account.ResetToken = null;
+			account.ResetTokenExpires = null;
+
+			context.Accounts.Update(account);
+			await context.SaveChangesAsync();
 		}
 
-		public Task<AccountResponse> Update(int id, UpdateRequest model)
+		public async Task<AccountResponse> Update(int id, UpdateRequest model)
 		{
-			throw new NotImplementedException();
+			var account = await GetAccountById(id);
+			var isEmailRegistered = await context.Accounts.AnyAsync(x => x.Email == model.Email);
+
+			if (account.Email != model.Email && isEmailRegistered)
+			{
+				throw new DomainException($"Email '{model.Email}' is already registered for a different user");
+			}
+
+			if (!string.IsNullOrEmpty(model.Password))
+			{
+				account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+			}
+
+			mapper.Map(model, account);
+			account.Updated = DateTime.UtcNow;
+			context.Accounts.Update(account);
+			await context.SaveChangesAsync();
+
+			return mapper.Map<AccountResponse>(account);
 		}
 
 		#region Private members
@@ -126,6 +185,53 @@ namespace Infrastructure.Services
                         {message}";
 
 			mailService.Send(account.Email, subject, html);
+		}
+
+		private void SendPasswordResetEmail(Account account, string origin)
+		{
+			string message;
+
+			if (!string.IsNullOrEmpty(origin))
+			{
+				var resetUrl = $"{origin}/account/reset-password?token={account.ResetToken}";
+				message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
+                            <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
+			}
+			else
+			{
+				message = $@"<p>Please use the below token to reset your password with the <code>/accounts/reset-password</code> api route:</p>
+                            <p><code>{account.ResetToken}</code></p>";
+			}
+
+			var subject = "Sign-up Verification API - Reset password";
+			var html = $@"<h4>Reset Password Email</h4>
+                        {message}";
+
+			mailService.Send(account.Email, subject, html);
+		}
+
+		private async Task<Account> GetAccountById(int id)
+		{
+			var account = await context.Accounts.FindAsync(id);
+
+			if (account == null)
+			{
+				throw new DomainException("Account not found");
+			}
+
+			return account;
+		}
+
+		private async Task<Account> GetAccountByResetToken(string token)
+		{
+			var account = await context.Accounts.SingleOrDefaultAsync(x => x.ResetToken == token);
+
+			if (account == null)
+			{
+				throw new DomainException("Invalid reset token");
+			}
+
+			return account;
 		}
 		#endregion
 	}

@@ -11,6 +11,5 @@ namespace Infrastructure
 		}
 
         public DbSet<Account> Accounts { get; set; }
-        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

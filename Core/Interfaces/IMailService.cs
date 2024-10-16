@@ -8,6 +8,6 @@ namespace Core.Interfaces
 {
 	public interface IMailService
 	{
-		Task Send(string receiver, string subject, string html, string sender = null);
+		void Send(string receiver, string subject, string html, string sender = null);
 	}
 }

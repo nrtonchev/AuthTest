@@ -109,6 +109,20 @@ namespace Infrastructure.Services
 			await GetAccountByResetToken(model.Token);
 		}
 
+		public async Task<string> GenerateResetToken()
+		{
+			var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
+
+			var tokenIsUnique = await context.Accounts.AnyAsync(x => x.ResetToken == token);
+
+			if (!tokenIsUnique)
+			{
+				return await GenerateResetToken();
+			}
+
+			return token;
+		}
+
 		public async Task VerifyEmail(string token)
 		{
 			var account = await context.Accounts.SingleOrDefaultAsync(x => x.VerificationToken == token);

@@ -17,7 +17,7 @@ namespace Infrastructure.Services
 			this.appSettings = appSettings.Value;
 		}
 
-		public Task Send(string receiver, string subject, string html, string sender = null)
+		public void Send(string receiver, string subject, string html, string sender = null)
 		{
 			var email = new MimeMessage();
 			email.From.Add(MailboxAddress.Parse(sender ?? appSettings.EmailFrom));
