@@ -70,7 +70,10 @@ namespace Infrastructure.Services
 
 		public async Task<IEnumerable<AccountResponse>> GetAccounts()
 		{
-			var accounts = await context.Accounts.Select(a => mapper.Map<AccountResponse>(a)).ToListAsync();
+			var accounts = await context.Accounts
+				.Select(a => mapper.Map<AccountResponse>(a))
+				.AsNoTracking()
+				.ToListAsync();
 			return accounts;
 		}
 

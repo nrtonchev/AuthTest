@@ -11,6 +11,6 @@ namespace Core.Interfaces
 		Task ValidateResetToken(ValidateResetTokenRequest model);
 		Task VerifyEmail(string token);
 		Task<string> GenerateVerificationToken();
-		Task<string> GenerateResetToken()
+		Task<string> GenerateResetToken();
 	}
 }
