@@ -1,6 +1,9 @@
 using API.Extensions;
 using API.Middlewares;
 using Core.Entities.Auth;
+using Infrastructure;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Logging;
 using System.Text.Json.Serialization;
 
 namespace API
@@ -24,11 +27,18 @@ namespace API
 
 			var app = builder.Build();
 
+			using (var scope = app.Services.CreateScope())
+			{
+				var applicationContext = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
+				applicationContext.Database.Migrate();
+			}
+
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{
 				app.UseSwagger();
 				app.UseSwaggerUI();
+				IdentityModelEventSource.ShowPII = true;
 			}
 
 			app.UseHttpsRedirection();

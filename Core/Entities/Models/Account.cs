@@ -20,7 +20,7 @@ namespace Core.Entities.Models
         public DateTime? PasswordReset { get; set; }
         public DateTime? Created { get; set; }
         public DateTime? Updated { get; set; }
-        public List<RefreshToken> RefreshTokens { get; set; }
+        public List<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
         public bool OwnsToken(string token)
         {

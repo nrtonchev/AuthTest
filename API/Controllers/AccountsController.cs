@@ -9,7 +9,7 @@ namespace API.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-    [Authorize]
+	[Authorize]
 	public class AccountsController : BaseController
 	{
 		private readonly IAccountService accountService;
@@ -20,6 +20,7 @@ namespace API.Controllers
 		}
 
 		[HttpPost("register")]
+		[AllowAnonymousAttribute]
 		public async Task<IActionResult> Register([FromBody] RegisterRequest request)
 		{
 			await accountService.Register(request, Origin);
@@ -28,6 +29,7 @@ namespace API.Controllers
 		}
 
 		[HttpPost("forgot-password")]
+		[AllowAnonymousAttribute]
 		public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
 		{
 			await accountService.ForgotPassword(request, Origin);
@@ -36,6 +38,7 @@ namespace API.Controllers
 		}
 
 		[HttpPost("reset-password")]
+		[AllowAnonymousAttribute]
 		public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
 		{
 			await accountService.ResetPassword(request);
@@ -50,7 +53,6 @@ namespace API.Controllers
 			return Ok(accounts);
 		}
 
-		[Authorize]
 		[HttpGet("{id:int}")]
 		public async Task<ActionResult<AccountResponse>> GetAccount(int id)
 		{
@@ -71,7 +73,6 @@ namespace API.Controllers
 			return Ok(account);
 		}
 
-		[Authorize]
 		[HttpPut("{id:int}")]
 		public async Task<ActionResult<AccountResponse>> Update(int id, [FromBody] UpdateRequest request)
 		{
@@ -89,7 +90,6 @@ namespace API.Controllers
 			return Ok(account);
 		}
 
-		[Authorize]
 		[HttpDelete("{id:int}")]
 		public async Task<IActionResult> Delete(int id)
 		{

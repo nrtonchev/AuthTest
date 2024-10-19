@@ -31,7 +31,7 @@ namespace Infrastructure.Services
 			{
 				Subject = new ClaimsIdentity(new[] { new Claim("id", account.Id.ToString()) }),
 				Expires = DateTime.UtcNow.AddMinutes(15),
-				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.EcdsaSha256Signature)
+				SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
 			};
 
 			var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -77,8 +77,8 @@ namespace Infrastructure.Services
 				{
 					ValidateIssuerSigningKey = true,
 					IssuerSigningKey = new SymmetricSecurityKey(key),
-					ValidateIssuer = true,
-					ValidateAudience = true,
+					ValidateIssuer = false,
+					ValidateAudience = false,
 					ClockSkew = TimeSpan.Zero
 				}, out SecurityToken validatedToken);
 

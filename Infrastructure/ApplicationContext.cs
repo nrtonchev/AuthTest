@@ -1,5 +1,4 @@
 ﻿using Core.Entities.Models;
-using Core.Entities.Auth;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure

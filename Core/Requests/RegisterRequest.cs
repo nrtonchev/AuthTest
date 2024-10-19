@@ -19,7 +19,6 @@ namespace Core.Requests
         [Required]
         [Compare("Password")]
         public string ConfirmPassword { get; set; }
-        [Range(typeof(bool), "true", "false")]
         public bool AcceptTerms { get; set; }
     }
 }

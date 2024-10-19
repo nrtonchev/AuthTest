@@ -28,7 +28,7 @@ namespace Infrastructure.Services
 
         public async Task<AuthResponse> Authenticate(AuthRequest request, string ipAddress)
 		{
-			var account = await context.Accounts.SingleOrDefaultAsync(x => x.Email == request.Email);
+			var account = await context.Accounts.Include(r => r.RefreshTokens).SingleOrDefaultAsync(x => x.Email == request.Email);
 			var isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, account.PasswordHash);
 
 			if (account == null || !account.IsVerified  || !isValidPassword)
@@ -113,9 +113,9 @@ namespace Infrastructure.Services
 		{
 			var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
 
-			var tokenIsUnique = await context.Accounts.AnyAsync(x => x.ResetToken == token);
+			var isExistingToken = await context.Accounts.AnyAsync(x => x.ResetToken == token);
 
-			if (!tokenIsUnique)
+			if (isExistingToken)
 			{
 				return await GenerateResetToken();
 			}
@@ -143,9 +143,9 @@ namespace Infrastructure.Services
 		{
 			var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
 
-			var isTokenUnique = await context.Accounts.AnyAsync(x => x.VerificationToken == token);
+			var isExistingToken = await context.Accounts.AnyAsync(x => x.VerificationToken == token);
 
-			if (!isTokenUnique)
+			if (isExistingToken)
 			{
 				return await GenerateVerificationToken();
 			}
@@ -161,7 +161,7 @@ namespace Infrastructure.Services
 
 		private async Task<Account> GetAccountByRefreshToken(string refreshToken)
 		{
-			var account = await context.Accounts.SingleOrDefaultAsync(x => x.RefreshTokens
+			var account = await context.Accounts.Include(r => r.RefreshTokens).SingleOrDefaultAsync(x => x.RefreshTokens
 				.Any(r => r.Token == refreshToken));
 
 			if (account == null)

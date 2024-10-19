@@ -9,6 +9,7 @@ namespace API.Extensions
 	{
 		public static void RegisterServices(this IServiceCollection services)
 		{
+			services.AddScoped<IJwtTokenUtils, JwtTokenUtils>();
 			services.AddScoped<IMailService, MailService>();
 			services.AddScoped<IAuthService, AuthService>();
 			services.AddScoped<IAccountService, AccountService>();
